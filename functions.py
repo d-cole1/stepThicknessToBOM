@@ -4,6 +4,50 @@ import math
 from pandas import read_excel
 
 
+# MAIN FUNCTION
+def execute_func(window, values):
+    try:
+        bom_df = extract_mre_bom(values["excel"])
+
+        if check_bom_format(bom_df):
+
+            stp_files = stp_finder(values["source"])
+            if not stp_files:
+                window.write_event_value("Error", "no_steps_found")
+
+            bom_df = extract_mre_bom(values["excel"])
+
+            thickness_values = []
+            found_file_names = []
+
+            output_dir = os.path.join(values["source"])
+
+            new_name = os.path.join(output_dir, os.path.basename(values["excel"]))
+
+            for stp_file in stp_files:
+                file_name = os.path.splitext(os.path.basename(stp_file))[0]
+                is_file_in_df = bom_df.isin([file_name]).any().any()
+
+                if is_file_in_df:  # '== True' omitted
+                    found_file_names.append(file_name)
+                    thickness = get_thickness(stp_file)
+                    thickness_values.append(thickness)
+
+            description_to_thickness = dict(zip(found_file_names, thickness_values))
+
+            bom_df["Gage (Thickness)"] = bom_df["DESCRIPTION"].map(description_to_thickness)
+
+            bom_df.to_excel(f"{new_name.strip('.xlsx')}_withThickness.xlsx", index=False, sheet_name="BOM")
+
+            window.write_event_value("Done", None)
+
+        else:
+            window.write_event_value("Error", "invalid_BOM")
+
+    except Exception as e:
+        window.write_event_value("Error", str(e))
+
+
 # HELPER FUNCTIONS
 # Searches the selected directory and extracts step files into a list
 def stp_finder(source_dir):
@@ -83,46 +127,3 @@ def get_thickness(file):
     mode_result = get_mode(edge_lens)
 
     return mode_result[0] if mode_result else None
-
-
-def execute_func(window, values):
-    try:
-        bom_df = extract_mre_bom(values["excel"])
-
-        if check_bom_format(bom_df):
-
-            stp_files = stp_finder(values["source"])
-            if not stp_files:
-                window.write_event_value("Error", "no_steps_found")
-
-            bom_df = extract_mre_bom(values["excel"])
-
-            thickness_values = []
-            found_file_names = []
-
-            output_dir = os.path.join(values["source"])
-
-            new_name = os.path.join(output_dir, os.path.basename(values["excel"]))
-
-            for stp_file in stp_files:
-                file_name = os.path.splitext(os.path.basename(stp_file))[0]
-                is_file_in_df = bom_df.isin([file_name]).any().any()
-
-                if is_file_in_df:  # '== True' omitted
-                    found_file_names.append(file_name)
-                    thickness = get_thickness(stp_file)
-                    thickness_values.append(thickness)
-
-            description_to_thickness = dict(zip(found_file_names, thickness_values))
-
-            bom_df["Gage (Thickness)"] = bom_df["DESCRIPTION"].map(description_to_thickness)
-
-            bom_df.to_excel(f"{new_name.strip('.xlsx')}_withThickness.xlsx", index=False, sheet_name="BOM")
-
-            window.write_event_value("Done", None)
-
-        else:
-            window.write_event_value("Error", "invalid_BOM")
-
-    except Exception as e:
-        window.write_event_value("Error", str(e))
