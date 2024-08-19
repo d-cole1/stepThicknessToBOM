@@ -24,9 +24,9 @@ s_logo = r"C:\Users\dominick.cole\Python\stepThicknessToBOM\logos\success.ico"
 
 # Define the layout for the GUI
 layout = [
-    [sg.Input(), sg.FolderBrowse("Select Folder to Search", key="source", pad=(5, 5))],
-    [sg.Input(), sg.FileBrowse("Select BOM", key="excel", pad=(5, 5))],
-    [sg.Button("Get Thicknesses")]
+    [sg.Text("Select folder:", size=(10, 1)), sg.Input(), sg.FolderBrowse("Browse", key="source", pad=(5, 5))],
+    [sg.Text("Select BOM:", size=(10, 1)),sg.Input(), sg.FileBrowse("Browse", key="excel", pad=(5, 5))],
+    [sg.Button("Estimate Thicknesses")]
 ]
 
 # Create the main window with the specified layout
@@ -40,8 +40,8 @@ while True:
         case sg.WIN_CLOSED:  # If the window is closed, exit the loop
             break
 
-        case "Get Thicknesses":
-            window["Get Thicknesses"].update(disabled=True)
+        case "Estimate Thicknesses":
+            window["Estimate Thicknesses"].update(disabled=True)
 
             execute_func(window, values)
 
